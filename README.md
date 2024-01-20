@@ -1,10 +1,10 @@
 # Quest Maker API
 
-## Authentication Service Endpoints Documentation
+## User Service Endpoints Documentation
 
-This document provides documentation for the authentication endpoints implemented in the Authentication Service for the Quest Maker API.
+This document provides documentation for the user endpoints implemented in the User Service for the Quest Maker API.
 
-### Authentication Endpoints
+### User Endpoints
 
 #### `POST /`
 
