@@ -68,7 +68,7 @@ def update_user(data: Union[UserUpdate, Dict[str, Any]], token: HTTPAuthorizatio
     scope = str(payload['scope'])
     if 'access_token' in scope.split():
         if valid:
-            return
+            return 'Successfully updated'
     else:
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail={
                             'message': 'Insufficient scope'})
@@ -94,7 +94,8 @@ def delete_user(token: HTTPAuthorizationCredentials = Security(bearer)):
     scope = str(payload['scope'])
     if 'access_token' in scope.split():
         auth_id = str(payload['sub'])
-        return service.delete(auth_id=auth_id)
+        service.delete(auth_id=auth_id)
+        return 'Successfully deleted'
     else:
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail={
                             'message': 'Insufficient scope'})
