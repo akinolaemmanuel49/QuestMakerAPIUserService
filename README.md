@@ -1,10 +1,10 @@
 # Quest Maker API
 
-## Authentication Service Endpoints Documentation
+## User Service Endpoints Documentation
 
-This document provides documentation for the authentication endpoints implemented in the Authentication Service for the Quest Maker API.
+This document provides documentation for the user endpoints implemented in the User Service for the Quest Maker API.
 
-### Authentication Endpoints
+### User Endpoints
 
 #### `POST /`
 
@@ -114,7 +114,7 @@ Follow the instructions below to clone a GitHub repository, install the required
 Make sure you have the following installed on your system:
 
 - [Git](https://git-scm.com/)
-- [Python](https://www.python.org/) (preferably Python 3.x)
+- [Python](https://www.python.org/) (preferably Python >= 3.11)
 - [pip](https://pip.pypa.io/) (Python package installer)
 
 ## Steps
