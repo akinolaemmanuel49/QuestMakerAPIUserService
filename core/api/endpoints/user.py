@@ -22,7 +22,7 @@ token_manager = TokenManager(key=env.JWT_SECRET_KEY.get_secret_value(),
 # Create new user
 def create_user(data: UserCreate, token: HTTPAuthorizationCredentials = Security(bearer)) -> Optional[PydanticObjectId]:
     try:
-        user = service.create(data=data)
+        id = service.create(data=data)
     except HTTPException:
         raise HTTPException(
             status_code=400, detail="Invalid request or unauthorized access")
@@ -31,10 +31,10 @@ def create_user(data: UserCreate, token: HTTPAuthorizationCredentials = Security
         scope = str(payload['scope'])
         if 'access_token' in scope.split():
             if str(data.auth_id) == str(payload['sub']):
-                return user.id
+                return id
             else:
                 raise HTTPException(
-                    status_code=500, detail="Internal server error")
+                    status_code=HTTPStatus.UNAUTHORIZED, detail="Unauthorized access")
 
 
 # Fetch a user
@@ -88,7 +88,7 @@ def fetch_users(organization_ids: Optional[List[PydanticObjectId]], role_ids: Op
 
 
 # Delete a user
-@users.delete('/')
+@users.delete('/', status_code=HTTPStatus.NO_CONTENT)
 def delete_user(token: HTTPAuthorizationCredentials = Security(bearer)):
     payload = token_manager.decode_token(token=token.credentials)
     scope = str(payload['scope'])

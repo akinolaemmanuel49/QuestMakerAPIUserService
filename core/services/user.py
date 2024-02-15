@@ -22,9 +22,8 @@ class UserService:
                 email=data.email,
                 firstName=data.firstName,
                 lastName=data.lastName,
-                roleIds=[str(roleId) for roleId in data.roleIds],
-                organizationIds=[str(organizationId)
-                                 for organizationId in data.organizationIds],
+                roles=data.roles,
+                organizations=data.organizations,
                 userType=data.userType,
                 auth_id=str(data.auth_id),
                 createdAt=str(datetime.utcnow()),
@@ -33,27 +32,20 @@ class UserService:
 
             # Convert the UserInDB container into a dict
             user_dict = user.model_dump()
+            if user_dict.get('organizations'):
+                for organization in user_dict['organizations']:
+                    organization['id'] = ObjectId(organization['id'])
+                    organization['ownerId'] = ObjectId(organization['ownerId'])
+            if user_dict.get('roles'):
+                for role in user_dict['roles']:
+                    role['id'] = ObjectId(role['id'])
+                    role['organizationId'] = ObjectId(role['organizationId'])
 
             # Create a new user instance in database collection
             document = db.user_collection.insert_one(user_dict)
 
-            # Load user_dict into UserResponse container
-            response = UserResponse(
-                _id=str(document.inserted_id),
-                email=data.email,
-                firstName=data.firstName,
-                lastName=data.lastName,
-                roleIds=[str(roleId) for roleId in data.roleIds],
-                organizationIds=[str(organizationId)
-                                 for organizationId in data.organizationIds],
-                userType=data.userType,
-                auth_id=str(data.auth_id),
-                createdAt=str(datetime.utcnow()),
-                updatedAt=str(datetime.utcnow())
-            )
-
-            # Return the UserResponse container
-            return response
+            # Return new user instance _id
+            return document.inserted_id
 
         except DuplicateKeyError:
             raise ValueError(
@@ -70,10 +62,12 @@ class UserService:
             # Convert ObjectId's to strings
             document['_id'] = str(document['_id'])
             document['auth_id'] = str(document['auth_id'])
-            document['roleIds'] = [str(roleId)
-                                   for roleId in document['roleIds']]
-            document['organizationIds'] = [
-                str(organizationId) for organizationId in document['organizationIds']]
+            if document['organizations']:
+                for organization in document['organizations']:
+                    organization['id'] = str(organization['id'])
+            if document['roles']:
+                for role in document['roles']:
+                    role['id'] = str(role['id'])
             document = UserResponse(**document)
             return document
         except Exception as e:
@@ -87,12 +81,12 @@ class UserService:
 
         if organization_ids:
             # Check if the user is a member of the requested organizations
-            if not all(organization_id in user.organizationIds for organization_id in user.organizationIds):
+            if not all(organization_id in user.organizations for organization_id in user.organizations):
                 raise ValueError('Unauthorized access to organizations')
-            query['organizationIds'] = {'$in': organization_ids}
+            query['organizations']['id'] = {'$in': organization_ids}
 
         if role_ids:
-            query['roleIds'] = {'$in': role_ids}
+            query['roles']['id'] = {'$in': role_ids}
 
         try:
             # document = db.user_collection.find_one({'_id': ObjectId(auth_id)})
@@ -102,10 +96,14 @@ class UserService:
                 # Convert ObjectId's to string
                 document['_id'] = str(document['_id'])
                 document['auth_id'] = str(document['auth_id'])
-                document['roleIds'] = [str(roleId)
-                                       for roleId in document['roleIds']]
-                document['organizationIds'] = [
-                    str(organizationId) for organizationId in document['organizationIds']]
+                if document['organizations']:
+                    for organization in document['organizations']:
+                        organization['id'] = str(organization['id'])
+                        organization['ownerId'] = str(organization['ownerId'])
+                if document['roles']:
+                    for role in document['roles']:
+                        role['_id'] = str(role['_id'])
+                        role['organizationId'] = str(role['organizationId'])
                 document = UserResponse(**document)
                 result.append(document)
             return result
@@ -118,19 +116,21 @@ class UserService:
                 data = data.model_dump(exclude_unset=True)
             # Update and convert date in updatedAt field to string
             data['updatedAt'] = str(datetime.utcnow())
-            if data.get('roleIds'):
-                data['roleIds'] = [str(roleId)
-                                   for roleId in data['roleIds']]
-            if data.get('organizationIds'):
-                data['organizationIds'] = [
-                    str(organizationId) for organizationId in data['organizationIds']]
+            if data.get('organizations'):
+                for organization in data['organizations']:
+                    organization['id'] = ObjectId(organization['id'])
+                    organization['ownerId'] = ObjectId(organization['ownerId'])
+            if data.get('roles'):
+                for role in data['roles']:
+                    role['_id'] = ObjectId(role['_id'])
+                    role['organizationId'] = ObjectId(role['organizationId'])
+
             # Find and update a user instance
             db.user_collection.update_one(
                 {'auth_id': ObjectId(auth_id)}, {'$set': data})
             return True
         except Exception as e:
             raise e
-        
 
     def delete(self, auth_id: PydanticObjectId):
         try:
